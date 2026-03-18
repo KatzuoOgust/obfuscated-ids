@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
@@ -14,11 +15,13 @@ internal static class IdComponents
 			? f.ToString(null, CultureInfo.InvariantCulture)
 			: value?.ToString() ?? string.Empty;
 
-	internal static T ParseValue<T>(string s)
+	internal static T? ParseValue<T>(string? s)
 	{
-		if (typeof(T) == typeof(string)) return (T)(object)s;
+		if (string.IsNullOrEmpty(s) && Nullable.GetUnderlyingType(typeof(T)) != null)
+			return default;
+		if (typeof(T) == typeof(string)) return (T)(object)s!;
 		var converter = TypeDescriptor.GetConverter(typeof(T));
-		return (T)converter.ConvertFromInvariantString(s)!;
+		return (T)converter.ConvertFromInvariantString(s!)!;
 	}
 
 	/// <summary>

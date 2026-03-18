@@ -17,11 +17,8 @@ public sealed class ObfuscatedId<T>
 	/// </summary>
 	/// <param name="value">The internal ID to obfuscate.</param>
 	/// <param name="obfuscator">The obfuscator to use, or <see langword="null"/> to use the default.</param>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
 	public ObfuscatedId(T value, IIdObfuscator<T>? obfuscator = null)
 	{
-		ArgumentNullException.ThrowIfNull(value);
-
 		var ob = obfuscator ?? new IdObfuscator<T>();
 		Value = value;
 		External = ob.Obfuscate(value);
@@ -46,7 +43,7 @@ public sealed class ObfuscatedId<T>
 
 		var ob = obfuscator ?? new IdObfuscator<T>();
 		var value = ob.Deobfuscate(external);
-		return new ObfuscatedId<T>(value, external);
+		return new ObfuscatedId<T>(value!, external);
 	}
 
 	/// <inheritdoc/>
@@ -75,12 +72,8 @@ public sealed class ObfuscatedId<T1, T2>
 	/// <param name="value1">The first component.</param>
 	/// <param name="value2">The second component.</param>
 	/// <param name="obfuscator">The obfuscator to use, or <see langword="null"/> to use the default.</param>
-	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, IIdObfuscator<(T1, T2)>? obfuscator = null)
 	{
-		ArgumentNullException.ThrowIfNull(value1);
-		ArgumentNullException.ThrowIfNull(value2);
-
 		var ob = obfuscator ?? new IdObfuscator<T1, T2>();
 		Value1 = value1;
 		Value2 = value2;
@@ -140,13 +133,8 @@ public sealed class ObfuscatedId<T1, T2, T3>
 	/// <param name="value2">The second component.</param>
 	/// <param name="value3">The third component.</param>
 	/// <param name="obfuscator">The obfuscator to use, or <see langword="null"/> to use the default.</param>
-	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3, IIdObfuscator<(T1, T2, T3)>? obfuscator = null)
 	{
-		ArgumentNullException.ThrowIfNull(value1);
-		ArgumentNullException.ThrowIfNull(value2);
-		ArgumentNullException.ThrowIfNull(value3);
-
 		var ob = obfuscator ?? new IdObfuscator<T1, T2, T3>();
 		Value1 = value1;
 		Value2 = value2;
@@ -213,14 +201,8 @@ public sealed class ObfuscatedId<T1, T2, T3, T4>
 	/// <param name="value3">The third component.</param>
 	/// <param name="value4">The fourth component.</param>
 	/// <param name="obfuscator">The obfuscator to use, or <see langword="null"/> to use the default.</param>
-	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3, T4 value4, IIdObfuscator<(T1, T2, T3, T4)>? obfuscator = null)
 	{
-		ArgumentNullException.ThrowIfNull(value1);
-		ArgumentNullException.ThrowIfNull(value2);
-		ArgumentNullException.ThrowIfNull(value3);
-		ArgumentNullException.ThrowIfNull(value4);
-
 		var ob = obfuscator ?? new IdObfuscator<T1, T2, T3, T4>();
 		Value1 = value1;
 		Value2 = value2;
@@ -294,15 +276,8 @@ public sealed class ObfuscatedId<T1, T2, T3, T4, T5>
 	/// <param name="value4">The fourth component.</param>
 	/// <param name="value5">The fifth component.</param>
 	/// <param name="obfuscator">The obfuscator to use, or <see langword="null"/> to use the default.</param>
-	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, IIdObfuscator<(T1, T2, T3, T4, T5)>? obfuscator = null)
 	{
-		ArgumentNullException.ThrowIfNull(value1);
-		ArgumentNullException.ThrowIfNull(value2);
-		ArgumentNullException.ThrowIfNull(value3);
-		ArgumentNullException.ThrowIfNull(value4);
-		ArgumentNullException.ThrowIfNull(value5);
-
 		var ob = obfuscator ?? new IdObfuscator<T1, T2, T3, T4, T5>();
 		Value1 = value1;
 		Value2 = value2;

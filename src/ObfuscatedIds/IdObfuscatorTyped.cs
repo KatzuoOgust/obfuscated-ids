@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace KatzuoOgust.ObfuscatedIds;
 
 /// <summary>
@@ -21,7 +23,7 @@ public sealed class IdObfuscator<T> : IIdObfuscator<T>
 		_base.Encode(IdComponents.FormatValue(value));
 
 	/// <inheritdoc/>
-	public T Deobfuscate(string token) =>
+	public T? Deobfuscate(string token) =>
 		IdComponents.ParseValue<T>(_base.Decode(token));
 }
 
@@ -50,7 +52,7 @@ public sealed class IdObfuscator<T1, T2> : IIdObfuscator<(T1, T2)>
 	public (T1, T2) Deobfuscate(string token)
 	{
 		var parts = IdComponents.SplitComponents(_base.Decode(token), 2);
-		return (IdComponents.ParseValue<T1>(parts[0]), IdComponents.ParseValue<T2>(parts[1]));
+		return (IdComponents.ParseValue<T1>(parts[0])!, IdComponents.ParseValue<T2>(parts[1])!);
 	}
 }
 
@@ -81,9 +83,9 @@ public sealed class IdObfuscator<T1, T2, T3> : IIdObfuscator<(T1, T2, T3)>
 	{
 		var parts = IdComponents.SplitComponents(_base.Decode(token), 3);
 		return (
-			IdComponents.ParseValue<T1>(parts[0]),
-			IdComponents.ParseValue<T2>(parts[1]),
-			IdComponents.ParseValue<T3>(parts[2])
+			IdComponents.ParseValue<T1>(parts[0])!,
+			IdComponents.ParseValue<T2>(parts[1])!,
+			IdComponents.ParseValue<T3>(parts[2])!
 		);
 	}
 }
@@ -116,10 +118,10 @@ public sealed class IdObfuscator<T1, T2, T3, T4> : IIdObfuscator<(T1, T2, T3, T4
 	{
 		var parts = IdComponents.SplitComponents(_base.Decode(token), 4);
 		return (
-			IdComponents.ParseValue<T1>(parts[0]),
-			IdComponents.ParseValue<T2>(parts[1]),
-			IdComponents.ParseValue<T3>(parts[2]),
-			IdComponents.ParseValue<T4>(parts[3])
+			IdComponents.ParseValue<T1>(parts[0])!,
+			IdComponents.ParseValue<T2>(parts[1])!,
+			IdComponents.ParseValue<T3>(parts[2])!,
+			IdComponents.ParseValue<T4>(parts[3])!
 		);
 	}
 }
@@ -153,11 +155,11 @@ public sealed class IdObfuscator<T1, T2, T3, T4, T5> : IIdObfuscator<(T1, T2, T3
 	{
 		var parts = IdComponents.SplitComponents(_base.Decode(token), 5);
 		return (
-			IdComponents.ParseValue<T1>(parts[0]),
-			IdComponents.ParseValue<T2>(parts[1]),
-			IdComponents.ParseValue<T3>(parts[2]),
-			IdComponents.ParseValue<T4>(parts[3]),
-			IdComponents.ParseValue<T5>(parts[4])
+			IdComponents.ParseValue<T1>(parts[0])!,
+			IdComponents.ParseValue<T2>(parts[1])!,
+			IdComponents.ParseValue<T3>(parts[2])!,
+			IdComponents.ParseValue<T4>(parts[3])!,
+			IdComponents.ParseValue<T5>(parts[4])!
 		);
 	}
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace KatzuoOgust.ObfuscatedIds;
 
 /// <summary>
@@ -46,8 +48,8 @@ public interface IIdObfuscator<T>
 	/// Decodes a token previously produced by <see cref="Obfuscate"/> back to the original value.
 	/// </summary>
 	/// <param name="token">A token returned by <see cref="Obfuscate"/>.</param>
-	/// <returns>The original value.</returns>
+	/// <returns>The original value, or <see langword="null"/> when <typeparamref name="T"/> is a nullable value type and the encoded value was null.</returns>
 	/// <exception cref="FormatException">Thrown when <paramref name="token"/> is not a valid token.</exception>
-	T Deobfuscate(string token);
+	T? Deobfuscate(string token);
 }
 
