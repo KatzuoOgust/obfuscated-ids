@@ -50,11 +50,17 @@ IdObfuscator.Configure(new byte[] { 0xAB, 0xCD, 0xEF, ... });
 ```
 ObfuscatedIds.sln
 ├── src/
-│   └── ObfuscatedIds/          # library
-│       ├── IdObfuscator.cs   # XOR + base64url core
-│       └── ObfuscatedId.cs   # generic ObfuscatedId<T…> classes
+│   └── ObfuscatedIds/               # library
+│       ├── Serialization/
+│       │   └── ObfuscatedIdJsonConverter.cs   # System.Text.Json factory + converters
+│       ├── IdObfuscator.cs          # XOR + base64url core
+│       ├── IdObfuscator.Error.cs    # exception factory (partial class)
+│       └── ObfuscatedId.cs          # generic ObfuscatedId<T…> classes
 └── tests/
-    └── ObfuscatedIds.Tests/    # xunit + FluentAssertions
+    └── ObfuscatedIds.Tests/         # xunit + FluentAssertions
+        ├── Serialization/
+        │   └── ObfuscatedIdJsonConverterTests.cs
+        └── ObfuscatedIdTests.cs
 ```
 
 ## Build & test
