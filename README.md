@@ -1,5 +1,7 @@
 # ObfuscatedIds
 
+[![CI/CD](https://github.com/KatzuoOgust/obfuscated-ids/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/KatzuoOgust/obfuscated-ids/actions/workflows/ci.yml)
+
 A small .NET 8 library for obfuscating internal database IDs before exposing them in APIs or URLs.
 Supports single values and composite tuples of up to four components.
 
