@@ -3,15 +3,16 @@
 [![CI/CD](https://github.com/KatzuoOgust/obfuscated-ids/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/KatzuoOgust/obfuscated-ids/actions/workflows/ci.yml)
 
 A small .NET 8 library for obfuscating internal database IDs before exposing them in APIs or URLs.
-Supports single values and composite tuples of up to four components.
+Supports single values and composite tuples of up to five components.
 
 ## How it works
 
 ```
-internal value(s) → format to string → UTF-8 bytes → XOR with key → base64url
+internal value(s) → format to string → UTF-8 bytes → XOR with key → [permute bytes] → base64url
 ```
 
-Decoding is the same pipeline in reverse (XOR is its own inverse).
+Decoding is the same pipeline in reverse. XOR is its own inverse; permutation uses the matching
+inverse shuffle derived from the same seed.
 The result is a URL-safe string with no `+`, `/`, or `=` padding characters.
 
 ## Quick start
@@ -71,9 +72,30 @@ Replace the default key once at application startup:
 
 ```csharp
 IdObfuscator.ConfigureXorKey(new byte[] { 0xAB, 0xCD, 0xEF, ... });
+// or from a string
+IdObfuscator.ConfigureXorKey("my-secret-key");
 ```
 
 > Tokens encoded with one key cannot be decoded with another.
+
+## Byte-position permutation
+
+Optionally shuffle the encoded bytes before base64url encoding. This makes tokens look
+more random and harder to spot patterns in, even when the XOR key is guessed.
+
+```csharp
+// Configure once at startup (byte[] or string overload)
+IdObfuscator.ConfigurePermutation("my-perm-seed");
+
+// Disable again if needed
+IdObfuscator.ResetPermutation();
+```
+
+The permutation is **deterministic and length-dependent**: a distinct Fisher-Yates shuffle
+is derived for each buffer length, so tokens of different sizes use different shuffles.
+
+> Tokens produced with an active permutation **cannot** be decoded without the same seed,
+> and are **not compatible** with tokens produced without a permutation (or with a different seed).
 
 ## Project structure
 

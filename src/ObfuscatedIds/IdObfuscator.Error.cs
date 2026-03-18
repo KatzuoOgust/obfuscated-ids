@@ -14,6 +14,9 @@ public static partial class IdObfuscator
 			new($"Plaintext exceeds the maximum allowed size of {MaxPlaintextBytes} UTF-8 bytes (got {length}).",
 				"plaintext");
 
+		internal static ArgumentException PermutationSeedEmpty() =>
+			new("Permutation seed must not be empty.", "seed");
+
 		internal static FormatException InvalidToken(string token, Exception inner) =>
 			new($"'{token}' is not a valid obfuscated ID token.", inner);
 	}

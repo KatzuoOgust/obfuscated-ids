@@ -548,5 +548,149 @@ public class ObfuscatedIdTests
 		decoded.Value2.Should().Be("c|d");
 		decoded.Value3.Should().Be(@"e\f");
 	}
+
+	// ── Permutation ───────────────────────────────────────────────────────────
+
+	[Fact]
+	public void ConfigurePermutation_ChangesExternalToken_IfSeedSet()
+	{
+		var tokenWithout = new ObfuscatedId<int>(42).External;
+
+		IdObfuscator.ConfigurePermutation("my-perm-seed");
+		try
+		{
+			var tokenWith = new ObfuscatedId<int>(42).External;
+			tokenWith.Should().NotBe(tokenWithout);
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(1)]
+	[InlineData(42)]
+	[InlineData(int.MaxValue)]
+	public void External_AlwaysSameToken_IfSingleIntEncodedRepeatedlyWithPermutation(int value)
+	{
+		IdObfuscator.ConfigurePermutation("perm-seed");
+		try
+		{
+			var tokens = Enumerable.Range(0, 10)
+				.Select(_ => new ObfuscatedId<int>(value).External)
+				.ToList();
+			tokens.Distinct().Should().HaveCount(1);
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Fact]
+	public void External_AlwaysSameToken_IfTuple2EncodedRepeatedlyWithPermutation()
+	{
+		IdObfuscator.ConfigurePermutation("perm-seed");
+		try
+		{
+			var tokens = Enumerable.Range(0, 10)
+				.Select(_ => new ObfuscatedId<int, long>(7, 123_456_789L).External)
+				.ToList();
+			tokens.Distinct().Should().HaveCount(1);
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Fact]
+	public void External_AlwaysSameToken_IfTuple3EncodedRepeatedlyWithPermutation()
+	{
+		var guid = Guid.NewGuid();
+		IdObfuscator.ConfigurePermutation("perm-seed");
+		try
+		{
+			var tokens = Enumerable.Range(0, 10)
+				.Select(_ => new ObfuscatedId<int, long, Guid>(1, 2L, guid).External)
+				.ToList();
+			tokens.Distinct().Should().HaveCount(1);
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Fact]
+	public void External_AlwaysSameToken_IfEncodedRepeatedlyWithPermutationAndPaddedBytes()
+	{
+		IdObfuscator.ConfigurePermutation("perm-seed");
+		IdObfuscator.PaddedBytes = 24;
+		try
+		{
+			var tokens = Enumerable.Range(0, 10)
+				.Select(_ => new ObfuscatedId<int>(42).External)
+				.ToList();
+			tokens.Distinct().Should().HaveCount(1);
+		}
+		finally
+		{
+			IdObfuscator.PaddedBytes = 0;
+			IdObfuscator.ResetPermutation();
+		}
+	}
+
+	[Fact]
+	public void ConfigurePermutation_RoundTrips_IfSingleInt()
+	{
+		IdObfuscator.ConfigurePermutation("my-perm-seed");
+		try
+		{
+			var id = new ObfuscatedId<int>(42);
+			ObfuscatedId<int>.FromExternal(id.External).Value.Should().Be(42);
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Fact]
+	public void ConfigurePermutation_RoundTrips_IfTuple3()
+	{
+		var guid = Guid.NewGuid();
+		IdObfuscator.ConfigurePermutation([0xDE, 0xAD, 0xBE, 0xEF]);
+		try
+		{
+			var id = new ObfuscatedId<int, Guid, string>(7, guid, "tag");
+			var decoded = ObfuscatedId<int, Guid, string>.FromExternal(id.External);
+			decoded.Value1.Should().Be(7);
+			decoded.Value2.Should().Be(guid);
+			decoded.Value3.Should().Be("tag");
+		}
+		finally { IdObfuscator.ResetPermutation(); }
+	}
+
+	[Fact]
+	public void ConfigurePermutation_ByteAndStringOverloads_ProduceSameToken()
+	{
+		var seed = "perm-seed";
+		IdObfuscator.ConfigurePermutation(seed);
+		var tokenFromString = new ObfuscatedId<int>(99).External;
+
+		IdObfuscator.ConfigurePermutation(System.Text.Encoding.UTF8.GetBytes(seed));
+		var tokenFromBytes = new ObfuscatedId<int>(99).External;
+
+		IdObfuscator.ResetPermutation();
+		tokenFromString.Should().Be(tokenFromBytes);
+	}
+
+	[Fact]
+	public void ResetPermutation_RestoresOriginalToken()
+	{
+		var tokenBefore = new ObfuscatedId<int>(42).External;
+
+		IdObfuscator.ConfigurePermutation("seed");
+		IdObfuscator.ResetPermutation();
+
+		new ObfuscatedId<int>(42).External.Should().Be(tokenBefore);
+	}
+
+	[Fact]
+	public void ConfigurePermutation_ThrowsArgumentException_IfSeedIsEmpty()
+	{
+		((Action)(() => IdObfuscator.ConfigurePermutation(string.Empty)))
+			.Should().Throw<ArgumentException>();
+		((Action)(() => IdObfuscator.ConfigurePermutation(Array.Empty<byte>())))
+			.Should().Throw<ArgumentException>();
+	}
 }
 
