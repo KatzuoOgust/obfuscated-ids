@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <RootNamespace>KatzuoOgust.ObfuscatedIds</RootNamespace>
+
+        <IsPackable>true</IsPackable>
+        <PackageId>ObfuscatedIds</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>ObfuscatedIds Contributors</Authors>
+        <Description>Obfuscates internal IDs (single values or tuples up to 4 components) using XOR + base64url encoding.</Description>
+        <PackageTags>id obfuscation base64 xor</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryType>git</RepositoryType>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageOutputPath>../../artifacts</PackageOutputPath>
+    </PropertyGroup>
+
+</Project>

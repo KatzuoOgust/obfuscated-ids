@@ -1,0 +1,83 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    tags:     [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore ObfuscatedIds.sln
+
+      - name: Check formatting
+        run: dotnet format ObfuscatedIds.sln --verify-no-changes --severity warn
+
+      - name: Build (warnings as errors)
+        run: dotnet build ObfuscatedIds.sln --no-restore --configuration Release /p:TreatWarningsAsErrors=true
+
+  build-and-test:
+    name: Build & Test
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore ObfuscatedIds.sln
+
+      - name: Build
+        run: dotnet build ObfuscatedIds.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test ObfuscatedIds.sln --no-build --configuration Release --logger "console;verbosity=normal"
+
+  pack:
+    name: Pack
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Pack
+        run: >
+          dotnet pack src/ObfuscatedIds/ObfuscatedIds.csproj
+          --configuration Release
+          /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: artifacts/*.nupkg
+          retention-days: 7

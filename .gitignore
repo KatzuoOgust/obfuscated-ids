@@ -1,0 +1,25 @@
+# Build outputs
+bin/
+obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+project.assets.json
+project.nuget.cache
+.nuget/
+
+# Rider / JetBrains
+.idea/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
