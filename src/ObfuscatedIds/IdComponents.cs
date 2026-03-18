@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text;
 
 namespace KatzuoOgust.ObfuscatedIds;
 
@@ -46,24 +45,27 @@ internal static class IdComponents
 	{
 		var parts = new string[count];
 		var partIndex = 0;
-		var sb = new StringBuilder();
-		for (var i = 0; i < plain.Length; i++)
+		var input = plain.AsSpan();
+		Span<char> buffer = stackalloc char[plain.Length];
+		var bufLen = 0;
+
+		for (var i = 0; i < input.Length; i++)
 		{
-			switch (plain[i])
+			switch (input[i])
 			{
-				case Esc when i + 1 < plain.Length:
-					sb.Append(plain[++i]); // consume escape prefix, append the literal char
+				case Esc when i + 1 < input.Length:
+					buffer[bufLen++] = input[++i]; // consume escape prefix, append the literal char
 					break;
 				case Sep when partIndex < count - 1:
-					parts[partIndex++] = sb.ToString();
-					sb.Clear();
+					parts[partIndex++] = new string(buffer[..bufLen]);
+					bufLen = 0;
 					break;
 				default:
-					sb.Append(plain[i]);
+					buffer[bufLen++] = input[i];
 					break;
 			}
 		}
-		parts[partIndex] = sb.ToString();
+		parts[partIndex] = new string(buffer[..bufLen]);
 		return parts;
 	}
 }
