@@ -31,7 +31,7 @@ jobs:
 
   build-and-test:
     name: Build & Test
-    needs: quality
+    needs: code-quality
     runs-on: ubuntu-latest
 
     steps:

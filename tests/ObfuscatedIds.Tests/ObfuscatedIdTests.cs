@@ -42,6 +42,20 @@ public class ObfuscatedIdTests
 		decoded.Value.Should().Be("hello-world");
 	}
 
+	// ── Type upgrade ─────────────────────────────────────────────────────────
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(1)]
+	[InlineData(42)]
+	[InlineData(int.MaxValue)]
+	[InlineData(int.MinValue)]
+	public void FromExternal_ReturnsEquivalentValue_IfIntTokenDecodedAsLong(int value)
+	{
+		var token = new ObfuscatedId<int>(value).External;
+		ObfuscatedId<long>.FromExternal(token).Value.Should().Be((long)value);
+	}
+
 	// ── Two-value tuple ──────────────────────────────────────────────────────
 
 	[Fact]
