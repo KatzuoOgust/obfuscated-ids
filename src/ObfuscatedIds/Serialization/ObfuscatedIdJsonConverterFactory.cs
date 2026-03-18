@@ -14,6 +14,17 @@ namespace KatzuoOgust.ObfuscatedIds.Serialization;
 /// </remarks>
 public sealed class ObfuscatedIdJsonConverterFactory : JsonConverterFactory
 {
+	private readonly IIdObfuscator? _obfuscator;
+
+	/// <summary>
+	/// Creates a factory that uses the supplied <paramref name="obfuscator"/>,
+	/// or <see cref="IdObfuscator.Default"/> when <see langword="null"/>.
+	/// </summary>
+	public ObfuscatedIdJsonConverterFactory(IIdObfuscator? obfuscator = null)
+	{
+		_obfuscator = obfuscator;
+	}
+
 	/// <inheritdoc/>
 	public override bool CanConvert(Type typeToConvert)
 	{
@@ -39,6 +50,6 @@ public sealed class ObfuscatedIdJsonConverterFactory : JsonConverterFactory
 			5 => typeof(ObfuscatedIdJsonConverter<,,,,>).MakeGenericType(args),
 			_ => throw new NotSupportedException($"Unsupported ObfuscatedId arity: {args.Length}.")
 		};
-		return (JsonConverter)Activator.CreateInstance(converterType)!;
+		return (JsonConverter)Activator.CreateInstance(converterType, _obfuscator)!;
 	}
 }

@@ -270,107 +270,55 @@ public class ObfuscatedIdTests
 	[Fact]
 	public void External_AlwaysSameToken_IfEncodedRepeatedlyWithPaddedBytes()
 	{
-		IdObfuscator.PaddedBytes = 32;
-		try
-		{
-			var tokens = Enumerable.Range(0, 10)
-				.Select(_ => new ObfuscatedId<int>(42).External)
-				.ToList();
+		var ob = new IdObfuscator<int>(new IdObfuscator(new IdObfuscatorOptions { PaddedBytes = 32 }));
+		var tokens = Enumerable.Range(0, 10)
+			.Select(_ => new ObfuscatedId<int>(42, ob).External)
+			.ToList();
 
-			tokens.Distinct().Should().HaveCount(1);
-		}
-		finally { IdObfuscator.PaddedBytes = 0; }
+		tokens.Distinct().Should().HaveCount(1);
 	}
 
 	// ── Custom key ───────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ConfigureXorKey_ChangesExternalToken_IfKeyChanged()
+	public void XorKey_ChangesExternalToken_IfKeyChanged()
 	{
-		IdObfuscator.ConfigureXorKey([0x01, 0x02, 0x03, 0x04]);
-		var externalWithCustomKey = new ObfuscatedId<int>(42).External;
-
-		IdObfuscator.ConfigureXorKey([0x4A,
-			0x7E,
-			0x2B,
-			0x9F,
-			0xD3,
-			0x61,
-			0xA8,
-			0x15,
-			0xC7,
-			0x53,
-			0xE9,
-			0x3D,
-			0x86,
-			0xF2,
-			0x0E,
-			0xB4]);
+		var customOb = new IdObfuscator<int>(new IdObfuscator(new IdObfuscatorOptions { XorKey = [0x01, 0x02, 0x03, 0x04] }));
+		var externalWithCustomKey = new ObfuscatedId<int>(42, customOb).External;
 		var externalWithDefaultKey = new ObfuscatedId<int>(42).External;
 
 		externalWithCustomKey.Should().NotBe(externalWithDefaultKey);
-
-		// restore custom key and verify round-trip still works
-		IdObfuscator.ConfigureXorKey([0x01, 0x02, 0x03, 0x04]);
-		var decoded = ObfuscatedId<int>.FromExternal(externalWithCustomKey);
-		decoded.Value.Should().Be(42);
-
-		// restore default for subsequent tests
-		IdObfuscator.ConfigureXorKey([0x4A,
-			0x7E,
-			0x2B,
-			0x9F,
-			0xD3,
-			0x61,
-			0xA8,
-			0x15,
-			0xC7,
-			0x53,
-			0xE9,
-			0x3D,
-			0x86,
-			0xF2,
-			0x0E,
-			0xB4]);
+		ObfuscatedId<int>.FromExternal(externalWithCustomKey, customOb).Value.Should().Be(42);
 	}
 
 	[Fact]
-	public void ConfigureXorKey_StringOverload_ProducesSameTokenAsUtf8Bytes()
+	public void XorKey_StringAndBytesOptions_ProduceSameToken()
 	{
 		var key = "my-secret-key";
-		IdObfuscator.ConfigureXorKey(key);
-		var tokenFromString = new ObfuscatedId<int>(42).External;
+		var optsFromString = new IdObfuscatorOptions();
+		optsFromString.SetXorKey(key);
+		var optsFromBytes = new IdObfuscatorOptions { XorKey = System.Text.Encoding.UTF8.GetBytes(key) };
 
-		IdObfuscator.ConfigureXorKey(System.Text.Encoding.UTF8.GetBytes(key));
-		var tokenFromBytes = new ObfuscatedId<int>(42).External;
+		var tokenFromString = new ObfuscatedId<int>(42, new IdObfuscator<int>(new IdObfuscator(optsFromString))).External;
+		var tokenFromBytes = new ObfuscatedId<int>(42, new IdObfuscator<int>(new IdObfuscator(optsFromBytes))).External;
 
 		tokenFromString.Should().Be(tokenFromBytes);
-
-		// restore default
-		IdObfuscator.ConfigureXorKey([0x4A, 0x7E, 0x2B, 0x9F, 0xD3, 0x61, 0xA8, 0x15,
-			0xC7, 0x53, 0xE9, 0x3D, 0x86, 0xF2, 0x0E, 0xB4]);
 	}
 
 	[Fact]
-	public void ConfigureXorKey_StringOverload_RoundTrips()
+	public void XorKey_StringOption_RoundTrips()
 	{
-		IdObfuscator.ConfigureXorKey("my-secret-key");
-		try
-		{
-			var id = new ObfuscatedId<int>(42);
-			ObfuscatedId<int>.FromExternal(id.External).Value.Should().Be(42);
-		}
-		finally
-		{
-			IdObfuscator.ConfigureXorKey([0x4A, 0x7E, 0x2B, 0x9F, 0xD3, 0x61, 0xA8, 0x15,
-				0xC7, 0x53, 0xE9, 0x3D, 0x86, 0xF2, 0x0E, 0xB4]);
-		}
+		var opts = new IdObfuscatorOptions();
+		opts.SetXorKey("my-secret-key");
+		var ob = new IdObfuscator<int>(new IdObfuscator(opts));
+		var id = new ObfuscatedId<int>(42, ob);
+		ObfuscatedId<int>.FromExternal(id.External, ob).Value.Should().Be(42);
 	}
 
 	[Fact]
-	public void ConfigureXorKey_StringOverload_ThrowsArgumentException_IfKeyIsEmpty()
+	public void XorKey_ThrowsArgumentException_IfKeyIsEmpty()
 	{
-		var act = () => IdObfuscator.ConfigureXorKey(string.Empty);
+		var act = () => new IdObfuscatorOptions { XorKey = [] };
 		act.Should().Throw<ArgumentException>();
 	}
 
@@ -379,81 +327,67 @@ public class ObfuscatedIdTests
 	[Fact]
 	public void PaddedBytes_ThrowsArgumentOutOfRangeException_IfValueIsNegative()
 	{
-		var act = () => IdObfuscator.PaddedBytes = -1;
+		var act = () => new IdObfuscatorOptions { PaddedBytes = -1 };
 		act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("PaddedBytes");
 	}
 
 	[Fact]
 	public void PaddedBytes_ThrowsArgumentOutOfRangeException_IfValueExceedsMaxPaddedBytes()
 	{
-		var act = () => IdObfuscator.PaddedBytes = IdObfuscator.MaxPaddedBytes + 1;
+		var act = () => new IdObfuscatorOptions { PaddedBytes = IdObfuscatorOptions.MaxPaddedBytes + 1 };
 		act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("PaddedBytes");
 	}
 
 	[Fact]
 	public void PaddedBytes_Succeeds_IfValueIsMaxPaddedBytes()
 	{
-		var act = () => IdObfuscator.PaddedBytes = IdObfuscator.MaxPaddedBytes;
+		var act = () => new IdObfuscatorOptions { PaddedBytes = IdObfuscatorOptions.MaxPaddedBytes };
 		act.Should().NotThrow();
-		IdObfuscator.PaddedBytes = 0;
 	}
 
 	[Fact]
 	public void External_AllSameLength_IfPaddedBytesSet()
 	{
-		IdObfuscator.PaddedBytes = 32;
-		try
+		var ob = new IdObfuscator(new IdObfuscatorOptions { PaddedBytes = 32 });
+		var tokens = new[]
 		{
-			var tokens = new[]
-			{
-				new ObfuscatedId<int>(1).External,
-				new ObfuscatedId<int>(999_999).External,
-				new ObfuscatedId<long>(long.MaxValue).External,
-				new ObfuscatedId<int, int>(1, 2).External,
-			};
+			new ObfuscatedId<int>(1, new IdObfuscator<int>(ob)).External,
+			new ObfuscatedId<int>(999_999, new IdObfuscator<int>(ob)).External,
+			new ObfuscatedId<long>(long.MaxValue, new IdObfuscator<long>(ob)).External,
+			new ObfuscatedId<int, int>(1, 2, new IdObfuscator<int, int>(ob)).External,
+		};
 
-			tokens.Should().OnlyHaveUniqueItems();
-			tokens.Select(t => t.Length).Distinct().Should().HaveCount(1);
-		}
-		finally { IdObfuscator.PaddedBytes = 0; }
+		tokens.Should().OnlyHaveUniqueItems();
+		tokens.Select(t => t.Length).Distinct().Should().HaveCount(1);
 	}
 
 	[Fact]
 	public void FromExternal_ReturnsOriginalValues_IfEncodedWithPaddedBytes()
 	{
-		IdObfuscator.PaddedBytes = 24;
-		try
-		{
-			var id = new ObfuscatedId<int, Guid>(7, Guid.NewGuid());
-			var decoded = ObfuscatedId<int, Guid>.FromExternal(id.External);
-			decoded.Value1.Should().Be(id.Value1);
-			decoded.Value2.Should().Be(id.Value2);
-		}
-		finally { IdObfuscator.PaddedBytes = 0; }
+		var ob = new IdObfuscator<int, Guid>(new IdObfuscator(new IdObfuscatorOptions { PaddedBytes = 24 }));
+		var id = new ObfuscatedId<int, Guid>(7, Guid.NewGuid(), ob);
+		var decoded = ObfuscatedId<int, Guid>.FromExternal(id.External, ob);
+		decoded.Value1.Should().Be(id.Value1);
+		decoded.Value2.Should().Be(id.Value2);
 	}
 
 	[Fact]
 	public void FromExternal_ReturnsOriginalValue_IfPaddedBytesDisabledAtDecodeTime()
 	{
 		// encode with padding on
-		IdObfuscator.PaddedBytes = 32;
-		var token = new ObfuscatedId<int>(42).External;
+		var obWithPadding = new IdObfuscator<int>(new IdObfuscator(new IdObfuscatorOptions { PaddedBytes = 32 }));
+		var token = new ObfuscatedId<int>(42, obWithPadding).External;
 
 		// decode with padding off — the embedded length header handles it
-		IdObfuscator.PaddedBytes = 0;
 		ObfuscatedId<int>.FromExternal(token).Value.Should().Be(42);
 	}
 
 	[Fact]
 	public void FromExternal_ReturnsOriginalValue_IfPaddedBytesSmallerThanNaturalSize()
 	{
-		IdObfuscator.PaddedBytes = 1;
-		try
-		{
-			var id = new ObfuscatedId<long>(long.MaxValue);
-			ObfuscatedId<long>.FromExternal(id.External).Value.Should().Be(long.MaxValue);
-		}
-		finally { IdObfuscator.PaddedBytes = 0; }
+		var ob = new IdObfuscator<long>(new IdObfuscator(new IdObfuscatorOptions { PaddedBytes = 1 }));
+		var id = new ObfuscatedId<long>(long.MaxValue, ob);
+		ObfuscatedId<long>.FromExternal(id.External, ob).Value.Should().Be(long.MaxValue);
 	}
 
 	// ── Decode error handling ────────────────────────────────────────────────
@@ -464,7 +398,7 @@ public class ObfuscatedIdTests
 	[InlineData("AAAA")]
 	public void Decode_ThrowsFormatException_IfTokenIsInvalid(string token)
 	{
-		var act = () => IdObfuscator.Decode(token);
+		var act = () => IdObfuscator.Default.Decode(token);
 		act.Should().Throw<FormatException>().WithMessage($"*{token}*");
 	}
 
@@ -473,19 +407,19 @@ public class ObfuscatedIdTests
 	[Fact]
 	public void Encode_Succeeds_IfPlaintextIsExactlyMaxBytes()
 	{
-		var plaintext = new string('a', IdObfuscator.MaxPlaintextBytes);
-		var act = () => IdObfuscator.Encode(plaintext);
+		var plaintext = new string('a', IdObfuscatorOptions.MaxPlaintextBytes);
+		var act = () => IdObfuscator.Default.Encode(plaintext);
 		act.Should().NotThrow();
 	}
 
 	[Fact]
 	public void Encode_ThrowsArgumentException_IfPlaintextExceedsMaxBytes()
 	{
-		var plaintext = new string('a', IdObfuscator.MaxPlaintextBytes + 1);
-		var act = () => IdObfuscator.Encode(plaintext);
+		var plaintext = new string('a', IdObfuscatorOptions.MaxPlaintextBytes + 1);
+		var act = () => IdObfuscator.Default.Encode(plaintext);
 		act.Should().Throw<ArgumentException>()
 			.WithParameterName("plaintext")
-			.WithMessage($"*{IdObfuscator.MaxPlaintextBytes}*");
+			.WithMessage($"*{IdObfuscatorOptions.MaxPlaintextBytes}*");
 	}
 
 	[Fact]
@@ -493,7 +427,7 @@ public class ObfuscatedIdTests
 	{
 		// Each '€' is 3 UTF-8 bytes, so 86 × 3 = 258 bytes > 255
 		var plaintext = new string('€', 86);
-		var act = () => IdObfuscator.Encode(plaintext);
+		var act = () => IdObfuscator.Default.Encode(plaintext);
 		act.Should().Throw<ArgumentException>()
 			.WithParameterName("plaintext");
 	}
@@ -552,17 +486,15 @@ public class ObfuscatedIdTests
 	// ── Permutation ───────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ConfigurePermutation_ChangesExternalToken_IfSeedSet()
+	public void PermutationSeed_ChangesExternalToken_IfSeedSet()
 	{
 		var tokenWithout = new ObfuscatedId<int>(42).External;
 
-		IdObfuscator.ConfigurePermutation("my-perm-seed");
-		try
-		{
-			var tokenWith = new ObfuscatedId<int>(42).External;
-			tokenWith.Should().NotBe(tokenWithout);
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("my-perm-seed");
+		var ob = new IdObfuscator<int>(new IdObfuscator(opts));
+		var tokenWith = new ObfuscatedId<int>(42, ob).External;
+		tokenWith.Should().NotBe(tokenWithout);
 	}
 
 	[Theory]
@@ -572,125 +504,151 @@ public class ObfuscatedIdTests
 	[InlineData(int.MaxValue)]
 	public void External_AlwaysSameToken_IfSingleIntEncodedRepeatedlyWithPermutation(int value)
 	{
-		IdObfuscator.ConfigurePermutation("perm-seed");
-		try
-		{
-			var tokens = Enumerable.Range(0, 10)
-				.Select(_ => new ObfuscatedId<int>(value).External)
-				.ToList();
-			tokens.Distinct().Should().HaveCount(1);
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("perm-seed");
+		var ob = new IdObfuscator<int>(new IdObfuscator(opts));
+		var tokens = Enumerable.Range(0, 10)
+			.Select(_ => new ObfuscatedId<int>(value, ob).External)
+			.ToList();
+		tokens.Distinct().Should().HaveCount(1);
 	}
 
 	[Fact]
 	public void External_AlwaysSameToken_IfTuple2EncodedRepeatedlyWithPermutation()
 	{
-		IdObfuscator.ConfigurePermutation("perm-seed");
-		try
-		{
-			var tokens = Enumerable.Range(0, 10)
-				.Select(_ => new ObfuscatedId<int, long>(7, 123_456_789L).External)
-				.ToList();
-			tokens.Distinct().Should().HaveCount(1);
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("perm-seed");
+		var ob = new IdObfuscator<int, long>(new IdObfuscator(opts));
+		var tokens = Enumerable.Range(0, 10)
+			.Select(_ => new ObfuscatedId<int, long>(7, 123_456_789L, ob).External)
+			.ToList();
+		tokens.Distinct().Should().HaveCount(1);
 	}
 
 	[Fact]
 	public void External_AlwaysSameToken_IfTuple3EncodedRepeatedlyWithPermutation()
 	{
 		var guid = Guid.NewGuid();
-		IdObfuscator.ConfigurePermutation("perm-seed");
-		try
-		{
-			var tokens = Enumerable.Range(0, 10)
-				.Select(_ => new ObfuscatedId<int, long, Guid>(1, 2L, guid).External)
-				.ToList();
-			tokens.Distinct().Should().HaveCount(1);
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("perm-seed");
+		var ob = new IdObfuscator<int, long, Guid>(new IdObfuscator(opts));
+		var tokens = Enumerable.Range(0, 10)
+			.Select(_ => new ObfuscatedId<int, long, Guid>(1, 2L, guid, ob).External)
+			.ToList();
+		tokens.Distinct().Should().HaveCount(1);
 	}
 
 	[Fact]
 	public void External_AlwaysSameToken_IfEncodedRepeatedlyWithPermutationAndPaddedBytes()
 	{
-		IdObfuscator.ConfigurePermutation("perm-seed");
-		IdObfuscator.PaddedBytes = 24;
-		try
-		{
-			var tokens = Enumerable.Range(0, 10)
-				.Select(_ => new ObfuscatedId<int>(42).External)
-				.ToList();
-			tokens.Distinct().Should().HaveCount(1);
-		}
-		finally
-		{
-			IdObfuscator.PaddedBytes = 0;
-			IdObfuscator.ResetPermutation();
-		}
+		var opts = new IdObfuscatorOptions { PaddedBytes = 24 };
+		opts.SetPermutationSeed("perm-seed");
+		var ob = new IdObfuscator<int>(new IdObfuscator(opts));
+		var tokens = Enumerable.Range(0, 10)
+			.Select(_ => new ObfuscatedId<int>(42, ob).External)
+			.ToList();
+		tokens.Distinct().Should().HaveCount(1);
 	}
 
 	[Fact]
-	public void ConfigurePermutation_RoundTrips_IfSingleInt()
+	public void PermutationSeed_RoundTrips_IfSingleInt()
 	{
-		IdObfuscator.ConfigurePermutation("my-perm-seed");
-		try
-		{
-			var id = new ObfuscatedId<int>(42);
-			ObfuscatedId<int>.FromExternal(id.External).Value.Should().Be(42);
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("my-perm-seed");
+		var ob = new IdObfuscator<int>(new IdObfuscator(opts));
+		var id = new ObfuscatedId<int>(42, ob);
+		ObfuscatedId<int>.FromExternal(id.External, ob).Value.Should().Be(42);
 	}
 
 	[Fact]
-	public void ConfigurePermutation_RoundTrips_IfTuple3()
+	public void PermutationSeed_RoundTrips_IfTuple3()
 	{
 		var guid = Guid.NewGuid();
-		IdObfuscator.ConfigurePermutation([0xDE, 0xAD, 0xBE, 0xEF]);
-		try
-		{
-			var id = new ObfuscatedId<int, Guid, string>(7, guid, "tag");
-			var decoded = ObfuscatedId<int, Guid, string>.FromExternal(id.External);
-			decoded.Value1.Should().Be(7);
-			decoded.Value2.Should().Be(guid);
-			decoded.Value3.Should().Be("tag");
-		}
-		finally { IdObfuscator.ResetPermutation(); }
+		var ob = new IdObfuscator<int, Guid, string>(new IdObfuscator(new IdObfuscatorOptions { PermutationSeed = [0xDE, 0xAD, 0xBE, 0xEF] }));
+		var id = new ObfuscatedId<int, Guid, string>(7, guid, "tag", ob);
+		var decoded = ObfuscatedId<int, Guid, string>.FromExternal(id.External, ob);
+		decoded.Value1.Should().Be(7);
+		decoded.Value2.Should().Be(guid);
+		decoded.Value3.Should().Be("tag");
 	}
 
 	[Fact]
-	public void ConfigurePermutation_ByteAndStringOverloads_ProduceSameToken()
+	public void PermutationSeed_StringAndBytesOptions_ProduceSameToken()
 	{
 		var seed = "perm-seed";
-		IdObfuscator.ConfigurePermutation(seed);
-		var tokenFromString = new ObfuscatedId<int>(99).External;
+		var optsStr = new IdObfuscatorOptions();
+		optsStr.SetPermutationSeed(seed);
+		var optsBytes = new IdObfuscatorOptions { PermutationSeed = System.Text.Encoding.UTF8.GetBytes(seed) };
 
-		IdObfuscator.ConfigurePermutation(System.Text.Encoding.UTF8.GetBytes(seed));
-		var tokenFromBytes = new ObfuscatedId<int>(99).External;
+		var tokenFromString = new ObfuscatedId<int>(99, new IdObfuscator<int>(new IdObfuscator(optsStr))).External;
+		var tokenFromBytes = new ObfuscatedId<int>(99, new IdObfuscator<int>(new IdObfuscator(optsBytes))).External;
 
-		IdObfuscator.ResetPermutation();
 		tokenFromString.Should().Be(tokenFromBytes);
 	}
 
 	[Fact]
-	public void ResetPermutation_RestoresOriginalToken()
+	public void PermutationSeed_NullResetsToOriginalToken()
 	{
-		var tokenBefore = new ObfuscatedId<int>(42).External;
+		var tokenWithout = new ObfuscatedId<int>(42).External;
+		var opts = new IdObfuscatorOptions();
+		opts.SetPermutationSeed("seed");
+		var tokenWith = new ObfuscatedId<int>(42, new IdObfuscator<int>(new IdObfuscator(opts))).External;
+		tokenWith.Should().NotBe(tokenWithout);
 
-		IdObfuscator.ConfigurePermutation("seed");
-		IdObfuscator.ResetPermutation();
-
-		new ObfuscatedId<int>(42).External.Should().Be(tokenBefore);
+		// Default (no permutation) still produces original token
+		new ObfuscatedId<int>(42).External.Should().Be(tokenWithout);
 	}
 
 	[Fact]
-	public void ConfigurePermutation_ThrowsArgumentException_IfSeedIsEmpty()
+	public void PermutationSeed_ThrowsArgumentException_IfSeedIsEmpty()
 	{
-		((Action)(() => IdObfuscator.ConfigurePermutation(string.Empty)))
-			.Should().Throw<ArgumentException>();
-		((Action)(() => IdObfuscator.ConfigurePermutation(Array.Empty<byte>())))
-			.Should().Throw<ArgumentException>();
+		var act1 = () => new IdObfuscatorOptions { PermutationSeed = Array.Empty<byte>() };
+		act1.Should().Throw<ArgumentException>();
+
+		var opts = new IdObfuscatorOptions();
+		var act2 = () => opts.SetPermutationSeed(string.Empty);
+		act2.Should().Throw<ArgumentException>();
+	}
+
+	// ── Typed IdObfuscator<T> ────────────────────────────────────────────────
+
+	[Fact]
+	public void TypedObfuscator_RoundTrips_IfSingleInt()
+	{
+		IIdObfuscator<int> ob = new IdObfuscator<int>();
+		var token = ob.Obfuscate(42);
+		ob.Deobfuscate(token).Should().Be(42);
+	}
+
+	[Fact]
+	public void TypedObfuscator_RoundTrips_IfTuple2()
+	{
+		IIdObfuscator<(int, string)> ob = new IdObfuscator<int, string>();
+		var token = ob.Obfuscate((7, "hello"));
+		ob.Deobfuscate(token).Should().Be((7, "hello"));
+	}
+
+	[Fact]
+	public void TypedObfuscator_RoundTrips_IfTuple3()
+	{
+		var guid = Guid.NewGuid();
+		IIdObfuscator<(int, Guid, string)> ob = new IdObfuscator<int, Guid, string>();
+		var token = ob.Obfuscate((1, guid, "tag"));
+		ob.Deobfuscate(token).Should().Be((1, guid, "tag"));
+	}
+
+	[Fact]
+	public void TypedObfuscator_UsesCustomBaseObfuscator_IfProvided()
+	{
+		var baseOb = new IdObfuscator(new IdObfuscatorOptions { XorKey = [0x11, 0x22, 0x33] });
+		IIdObfuscator<int> typed = new IdObfuscator<int>(baseOb);
+		IIdObfuscator<int> defaultTyped = new IdObfuscator<int>();
+
+		var tokenCustom = typed.Obfuscate(99);
+		var tokenDefault = defaultTyped.Obfuscate(99);
+
+		tokenCustom.Should().NotBe(tokenDefault);
+		typed.Deobfuscate(tokenCustom).Should().Be(99);
 	}
 }
 
