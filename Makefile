@@ -1,4 +1,4 @@
-.PHONY: help build test clean pack publish
+.PHONY: help build test clean pack publish codeql
 
 PROJECT  := ObfuscatedIds.sln
 LIBRARY  := src/ObfuscatedIds/ObfuscatedIds.csproj
@@ -27,6 +27,9 @@ publish: pack ## Push NuGet package (requires NUGET_API_KEY)
 		--api-key $(NUGET_API_KEY) \
 		--source $(NUGET_SOURCE) \
 		--skip-duplicate
+
+codeql: ## Run formatting check + CodeQL analysis (requires codeql CLI on PATH)
+	dotnet format $(PROJECT) --verify-no-changes --severity warn
 
 clean: ## Remove build artifacts and NuGet packages
 	dotnet clean $(PROJECT)

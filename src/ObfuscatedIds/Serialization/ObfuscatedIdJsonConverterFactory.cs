@@ -20,10 +20,10 @@ public sealed class ObfuscatedIdJsonConverterFactory : JsonConverterFactory
 		if (!typeToConvert.IsGenericType) return false;
 		var def = typeToConvert.GetGenericTypeDefinition();
 		return def == typeof(ObfuscatedId<>)
-		       || def == typeof(ObfuscatedId<,>)
-		       || def == typeof(ObfuscatedId<,,>)
-		       || def == typeof(ObfuscatedId<,,,>)
-		       || def == typeof(ObfuscatedId<,,,,>);
+			|| def == typeof(ObfuscatedId<,>)
+			|| def == typeof(ObfuscatedId<,,>)
+			|| def == typeof(ObfuscatedId<,,,>)
+			|| def == typeof(ObfuscatedId<,,,,>);
 	}
 
 	/// <inheritdoc/>
