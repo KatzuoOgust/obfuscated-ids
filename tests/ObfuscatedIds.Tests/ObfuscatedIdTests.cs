@@ -295,6 +295,28 @@ public class ObfuscatedIdTests
 	// ── PaddedBytes alignment ────────────────────────────────────────────────
 
 	[Fact]
+	public void PaddedBytes_ThrowsArgumentOutOfRangeException_IfValueIsNegative()
+	{
+		var act = () => IdObfuscator.PaddedBytes = -1;
+		act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("PaddedBytes");
+	}
+
+	[Fact]
+	public void PaddedBytes_ThrowsArgumentOutOfRangeException_IfValueExceedsMaxPaddedBytes()
+	{
+		var act = () => IdObfuscator.PaddedBytes = IdObfuscator.MaxPaddedBytes + 1;
+		act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("PaddedBytes");
+	}
+
+	[Fact]
+	public void PaddedBytes_Succeeds_IfValueIsMaxPaddedBytes()
+	{
+		var act = () => IdObfuscator.PaddedBytes = IdObfuscator.MaxPaddedBytes;
+		act.Should().NotThrow();
+		IdObfuscator.PaddedBytes = 0;
+	}
+
+	[Fact]
 	public void External_AllSameLength_IfPaddedBytesSet()
 	{
 		IdObfuscator.PaddedBytes = 32;

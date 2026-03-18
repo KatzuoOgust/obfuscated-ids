@@ -16,8 +16,11 @@ public sealed class ObfuscatedId<T>
 	/// Creates a new <see cref="ObfuscatedId{T}"/> from an internal value and computes its external token.
 	/// </summary>
 	/// <param name="value">The internal ID to obfuscate.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
 	public ObfuscatedId(T value)
 	{
+		ArgumentNullException.ThrowIfNull(value);
+
 		Value = value;
 		External = IdObfuscator.Encode(IdObfuscator.FormatValue(value));
 	}
@@ -33,8 +36,11 @@ public sealed class ObfuscatedId<T>
 	/// </summary>
 	/// <param name="external">A token previously returned by <see cref="External"/>.</param>
 	/// <returns>An instance whose <see cref="Value"/> holds the decoded internal ID.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="external"/> is null.</exception>
 	public static ObfuscatedId<T> FromExternal(string external)
 	{
+		ArgumentNullException.ThrowIfNull(external);
+
 		var plain = IdObfuscator.Decode(external);
 		return new ObfuscatedId<T>(IdObfuscator.ParseValue<T>(plain), external);
 	}
@@ -62,8 +68,12 @@ public sealed class ObfuscatedId<T1, T2>
 	/// <summary>
 	/// Creates a new <see cref="ObfuscatedId{T1,T2}"/> from two internal values.
 	/// </summary>
+	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2)
 	{
+		ArgumentNullException.ThrowIfNull(value1);
+		ArgumentNullException.ThrowIfNull(value2);
+
 		Value1 = value1;
 		Value2 = value2;
 		External = IdObfuscator.Encode(
@@ -85,8 +95,11 @@ public sealed class ObfuscatedId<T1, T2>
 	/// Decodes an external token back into an <see cref="ObfuscatedId{T1,T2}"/>.
 	/// </summary>
 	/// <param name="external">A token previously returned by <see cref="External"/>.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="external"/> is null.</exception>
 	public static ObfuscatedId<T1, T2> FromExternal(string external)
 	{
+		ArgumentNullException.ThrowIfNull(external);
+
 		var plain = IdObfuscator.Decode(external);
 		var parts = IdObfuscator.SplitComponents(plain, 2);
 		return new ObfuscatedId<T1, T2>(
@@ -123,8 +136,13 @@ public sealed class ObfuscatedId<T1, T2, T3>
 	/// <summary>
 	/// Creates a new <see cref="ObfuscatedId{T1,T2,T3}"/> from three internal values.
 	/// </summary>
+	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3)
 	{
+		ArgumentNullException.ThrowIfNull(value1);
+		ArgumentNullException.ThrowIfNull(value2);
+		ArgumentNullException.ThrowIfNull(value3);
+
 		Value1 = value1;
 		Value2 = value2;
 		Value3 = value3;
@@ -149,8 +167,11 @@ public sealed class ObfuscatedId<T1, T2, T3>
 	/// Decodes an external token back into an <see cref="ObfuscatedId{T1,T2,T3}"/>.
 	/// </summary>
 	/// <param name="external">A token previously returned by <see cref="External"/>.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="external"/> is null.</exception>
 	public static ObfuscatedId<T1, T2, T3> FromExternal(string external)
 	{
+		ArgumentNullException.ThrowIfNull(external);
+
 		var plain = IdObfuscator.Decode(external);
 		var parts = IdObfuscator.SplitComponents(plain, 3);
 		return new ObfuscatedId<T1, T2, T3>(
@@ -192,8 +213,14 @@ public sealed class ObfuscatedId<T1, T2, T3, T4>
 	/// <summary>
 	/// Creates a new <see cref="ObfuscatedId{T1,T2,T3,T4}"/> from four internal values.
 	/// </summary>
+	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3, T4 value4)
 	{
+		ArgumentNullException.ThrowIfNull(value1);
+		ArgumentNullException.ThrowIfNull(value2);
+		ArgumentNullException.ThrowIfNull(value3);
+		ArgumentNullException.ThrowIfNull(value4);
+
 		Value1 = value1;
 		Value2 = value2;
 		Value3 = value3;
@@ -221,8 +248,11 @@ public sealed class ObfuscatedId<T1, T2, T3, T4>
 	/// Decodes an external token back into an <see cref="ObfuscatedId{T1,T2,T3,T4}"/>.
 	/// </summary>
 	/// <param name="external">A token previously returned by <see cref="External"/>.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="external"/> is null.</exception>
 	public static ObfuscatedId<T1, T2, T3, T4> FromExternal(string external)
 	{
+		ArgumentNullException.ThrowIfNull(external);
+
 		var plain = IdObfuscator.Decode(external);
 		var parts = IdObfuscator.SplitComponents(plain, 4);
 		return new ObfuscatedId<T1, T2, T3, T4>(
@@ -269,8 +299,15 @@ public sealed class ObfuscatedId<T1, T2, T3, T4, T5>
 	/// <summary>
 	/// Creates a new <see cref="ObfuscatedId{T1,T2,T3,T4,T5}"/> from five internal values.
 	/// </summary>
+	/// <exception cref="ArgumentNullException">Thrown when any value is null.</exception>
 	public ObfuscatedId(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)
 	{
+		ArgumentNullException.ThrowIfNull(value1);
+		ArgumentNullException.ThrowIfNull(value2);
+		ArgumentNullException.ThrowIfNull(value3);
+		ArgumentNullException.ThrowIfNull(value4);
+		ArgumentNullException.ThrowIfNull(value5);
+
 		Value1 = value1;
 		Value2 = value2;
 		Value3 = value3;
@@ -301,8 +338,11 @@ public sealed class ObfuscatedId<T1, T2, T3, T4, T5>
 	/// Decodes an external token back into an <see cref="ObfuscatedId{T1,T2,T3,T4,T5}"/>.
 	/// </summary>
 	/// <param name="external">A token previously returned by <see cref="External"/>.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="external"/> is null.</exception>
 	public static ObfuscatedId<T1, T2, T3, T4, T5> FromExternal(string external)
 	{
+		ArgumentNullException.ThrowIfNull(external);
+
 		var plain = IdObfuscator.Decode(external);
 		var parts = IdObfuscator.SplitComponents(plain, 5);
 		return new ObfuscatedId<T1, T2, T3, T4, T5>(

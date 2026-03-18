@@ -30,6 +30,13 @@ public static partial class IdObfuscator
 	public const int MaxPlaintextBytes = 255;
 
 	/// <summary>
+	/// Maximum allowed value for <see cref="PaddedBytes"/>.
+	/// Equal to the largest possible frame size: 2-byte length header + <see cref="MaxPlaintextBytes"/> data bytes.
+	/// Padding beyond this adds only zero noise with no additional alignment benefit.
+	/// </summary>
+	public const int MaxPaddedBytes = MaxPlaintextBytes + 2;
+
+	/// <summary>
 	/// Minimum number of bytes in the pre-base64 buffer.
 	/// When the framed payload (2-byte header + UTF-8 data) is smaller than this value,
 	/// zero bytes are appended to reach exactly <see cref="PaddedBytes"/> bytes,
@@ -40,13 +47,13 @@ public static partial class IdObfuscator
 	/// Every 3 input bytes produce 4 base64url characters, so the resulting token length is
 	/// <c>ceil(PaddedBytes / 3) * 4</c> characters (without the stripped <c>=</c> padding).
 	/// </remarks>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when set to a negative value.</exception>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when set to a negative value or a value greater than <see cref="MaxPaddedBytes"/>.</exception>
 	public static int PaddedBytes
 	{
 		get => _paddedBytes;
 		set
 		{
-			if (value < 0) throw Error.PaddedBytesNegative();
+			if (value < 0 || value > MaxPaddedBytes) throw Error.PaddedBytesOutOfRange(value);
 			_paddedBytes = value;
 		}
 	}
@@ -61,6 +68,7 @@ public static partial class IdObfuscator
 	public static void ConfigureXorKey(byte[] key)
 	{
 		ArgumentNullException.ThrowIfNull(key);
+
 		if (key.Length == 0) throw Error.KeyEmpty();
 		_key = key;
 	}
@@ -78,6 +86,8 @@ public static partial class IdObfuscator
 	/// </exception>
 	public static string Encode(string plaintext)
 	{
+		ArgumentNullException.ThrowIfNull(plaintext);
+
 		var data = Encoding.UTF8.GetBytes(plaintext);
 		if (data.Length > MaxPlaintextBytes)
 			throw Error.PlaintextTooLong(data.Length);
@@ -107,6 +117,8 @@ public static partial class IdObfuscator
 	/// <exception cref="FormatException">Thrown when <paramref name="token"/> is not a valid obfuscated ID token.</exception>
 	public static string Decode(string token)
 	{
+		ArgumentNullException.ThrowIfNull(token);
+
 		try
 		{
 			var padded = token.Replace('-', '+').Replace('_', '/');
@@ -136,7 +148,7 @@ public static partial class IdObfuscator
 	private const char Sep = '|';
 	private const char Esc = '\\';
 
-	internal static string FormatValue<T>(T value) =>
+	internal static string FormatValue<T>(T? value) =>
 		value is IFormattable f
 			? f.ToString(null, CultureInfo.InvariantCulture)
 			: value?.ToString() ?? string.Empty;
@@ -154,10 +166,12 @@ public static partial class IdObfuscator
 	/// </summary>
 	internal static string JoinComponents(params string[] parts)
 	{
-		var escaped = new string[parts.Length];
-		for (var i = 0; i < parts.Length; i++)
-			escaped[i] = parts[i].Replace("\\", "\\\\").Replace("|", "\\|");
-		return string.Join(Sep, escaped);
+		return string.Join(Sep, parts.Select(Escape));
+
+		static string Escape(string s)
+		{
+			return s.Replace($"{Esc}", $"{Esc}{Esc}").Replace($"{Sep}", $"{Esc}{Sep}");
+		}
 	}
 
 	/// <summary>
@@ -171,15 +185,19 @@ public static partial class IdObfuscator
 		var sb = new StringBuilder();
 		for (var i = 0; i < plain.Length; i++)
 		{
-			if (plain[i] == Esc && i + 1 < plain.Length)
-				sb.Append(plain[++i]); // consume escape prefix, append the literal char
-			else if (plain[i] == Sep && partIndex < count - 1)
+			switch (plain[i])
 			{
-				parts[partIndex++] = sb.ToString();
-				sb.Clear();
+				case Esc when i + 1 < plain.Length:
+					sb.Append(plain[++i]); // consume escape prefix, append the literal char
+					break;
+				case Sep when partIndex < count - 1:
+					parts[partIndex++] = sb.ToString();
+					sb.Clear();
+					break;
+				default:
+					sb.Append(plain[i]);
+					break;
 			}
-			else
-				sb.Append(plain[i]);
 		}
 		parts[partIndex] = sb.ToString();
 		return parts;
