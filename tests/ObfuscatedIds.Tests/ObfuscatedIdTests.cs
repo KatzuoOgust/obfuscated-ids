@@ -334,6 +334,46 @@ public class ObfuscatedIdTests
 			0xB4]);
 	}
 
+	[Fact]
+	public void ConfigureXorKey_StringOverload_ProducesSameTokenAsUtf8Bytes()
+	{
+		var key = "my-secret-key";
+		IdObfuscator.ConfigureXorKey(key);
+		var tokenFromString = new ObfuscatedId<int>(42).External;
+
+		IdObfuscator.ConfigureXorKey(System.Text.Encoding.UTF8.GetBytes(key));
+		var tokenFromBytes = new ObfuscatedId<int>(42).External;
+
+		tokenFromString.Should().Be(tokenFromBytes);
+
+		// restore default
+		IdObfuscator.ConfigureXorKey([0x4A, 0x7E, 0x2B, 0x9F, 0xD3, 0x61, 0xA8, 0x15,
+			0xC7, 0x53, 0xE9, 0x3D, 0x86, 0xF2, 0x0E, 0xB4]);
+	}
+
+	[Fact]
+	public void ConfigureXorKey_StringOverload_RoundTrips()
+	{
+		IdObfuscator.ConfigureXorKey("my-secret-key");
+		try
+		{
+			var id = new ObfuscatedId<int>(42);
+			ObfuscatedId<int>.FromExternal(id.External).Value.Should().Be(42);
+		}
+		finally
+		{
+			IdObfuscator.ConfigureXorKey([0x4A, 0x7E, 0x2B, 0x9F, 0xD3, 0x61, 0xA8, 0x15,
+				0xC7, 0x53, 0xE9, 0x3D, 0x86, 0xF2, 0x0E, 0xB4]);
+		}
+	}
+
+	[Fact]
+	public void ConfigureXorKey_StringOverload_ThrowsArgumentException_IfKeyIsEmpty()
+	{
+		var act = () => IdObfuscator.ConfigureXorKey(string.Empty);
+		act.Should().Throw<ArgumentException>();
+	}
+
 	// ── PaddedBytes alignment ────────────────────────────────────────────────
 
 	[Fact]

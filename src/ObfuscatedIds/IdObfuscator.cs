@@ -88,6 +88,21 @@ public static partial class IdObfuscator
 	}
 
 	/// <summary>
+	/// Replaces the global XOR key using the UTF-8 encoding of <paramref name="key"/>.
+	/// Call this once at application startup before encoding or decoding any IDs.
+	/// </summary>
+	/// <param name="key">A non-empty string; its UTF-8 bytes are used as the key.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/> is null.</exception>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="key"/> is empty.</exception>
+	public static void ConfigureXorKey(string key)
+	{
+		ArgumentNullException.ThrowIfNull(key);
+
+		if (key.Length == 0) throw Error.KeyEmpty();
+		_key = Encoding.UTF8.GetBytes(key);
+	}
+
+	/// <summary>
 	/// Encodes a plaintext string to a URL-safe, base64url-encoded, XOR-obfuscated token.
 	/// </summary>
 	/// <param name="plaintext">The string to obfuscate.</param>
