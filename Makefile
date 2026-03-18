@@ -1,7 +1,8 @@
-.PHONY: help build test clean pack publish codeql
+.PHONY: help build test examples clean pack publish codeql
 
 PROJECT  := ObfuscatedIds.sln
 LIBRARY  := src/ObfuscatedIds/ObfuscatedIds.csproj
+EXAMPLE  := examples/GettingStarted/GettingStarted.csproj
 ARTIFACTS := artifacts
 
 # NuGet target — override via environment or command line
@@ -16,6 +17,9 @@ build: ## Build all projects
 
 test: ## Run all tests
 	dotnet test $(PROJECT)
+
+examples: ## Run all examples
+	dotnet run --project $(EXAMPLE)
 
 pack: ## Create NuGet package → artifacts/
 	dotnet pack $(LIBRARY) --configuration Release

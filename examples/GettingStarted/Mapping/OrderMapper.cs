@@ -23,7 +23,7 @@ public sealed class OrderMapper(IIdObfuscator obfuscator)
 
 	public InternalOrder FromResponse(OrderResponse response) => new()
 	{
-		Id = ObfuscatedId<int>.FromExternal(response.Id.External, _typedObfuscator).Value,
+		Id = response.Id.Value,
 		CustomerName = response.CustomerName,
 		Total = response.Total,
 	};
